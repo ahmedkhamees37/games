@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Project Crazy Racing</title>
+	<link rel="stylesheet" href="./style/style.css">
+	 <link rel="stylesheet" href="style/style1.css" />
+</head>
+<body background="./photo/fond.jpg" style=" background-repeat:no-repeat ;background-size:cover; " onload="showmessange()">
+     
+<div class="container">
+
+		<canvas></canvas>
+	</div>
+
+	<h1 class="score">Score: <span id="score"></span></h1>
+<h3 class="instructions">
+		
+		High Score: <span id="highScore">0</span>
+	</h3>
+ <!--***************************************************************
+//صوت الخلفيه-->
+
+	</audio>
+	<audio id="son-background"  autoplay loop>
+		<source src="audio/bgsound.mp3" type="audio/mp3">
+	</audio>
+<!-- ***************************************************************-->
+
+
+
+<script>
+//**************************************************************************************************************
+//رساله ترحيبيه
+function showmessange()
+{
+var yourname=prompt("please,enter your name");
+alert("welcome : "+yourname);
+}
+//**************************************************************************************************************
+
+
+
+const canvas = document.querySelector('canvas')
+const ctx = canvas.getContext('2d')
+
+
+canvas.height = window.innerHeight - 20
+canvas.width = 850
+
+let speed = 10
+let pause = false
+//****************************************************************************************************************
+//الاسكور 
+let score = 0
+let highScore = localStorage.getItem('highScore') ? localStorage.getItem('highScore') : 0
+
+let prevScoreCount = 0
+let nextScoreCount = Math.floor(score / 10)
+
+const renderScore = () => {
+	document.querySelector('#score').innerHTML = score
+}
+
+const renderHighScore = () => {
+	document.querySelector('#highScore').innerHTML = highScore
+}
+
+renderScore()
+renderHighScore()
+//******************************************************************************************************************
+//*****************************************************************************************************************
+//الطريق
+const skyBox = new Image()
+skyBox.src = './photo/road2.png'//لتغير الطريق
+
+skyBox.onload = () => {
+	let y = 0
+	const moveRoad = () => {
+		ctx.drawImage(skyBox, 0, y - canvas.height, canvas.width, canvas.height * 2)
+		y += speed
+		if (y >= canvas.height)
+			y = 0
+
+		if (pause) return
+		requestAnimationFrame(moveRoad)
+	}
+	moveRoad()
+}
+//****************************************************************************************************************
+
+//******************************************************************************************************************
+//العربيه الي انا بتحكم فيها
+const playerCar = new Image()
+playerCar.src = './photo/cars/Ambulance.png'//لتغير العربيه
+
+let playerCarPositionX = 380 // canvas.width/2 - playerCar.width/2
+// let playerCarPositionY = canvas.height - playerCar.height
+
+const drawCar = () => {
+	let playerCarPositionY = canvas.height - playerCar.height
+	ctx.drawImage(playerCar, playerCarPositionX, playerCarPositionY)
+
+	if (pause) return
+	requestAnimationFrame(drawCar)
+}
+
+playerCar.onload = () => {
+	drawCar()
+}
+//**********************************************************************************************************
+
+// العربيات الي في الطريق الي عقبات
+const spawnCars = (posY) => {
+
+	const obstaclePosition = [30, 380]//بتحكم في كام عمود من العربيات امامي
+	const obstacleImage = new Image()
+	obstacleImage.src = './photo/cars/taxi.png'//لتغير العربيات الي علي الطريق 
+	let obstaclePositionX = obstaclePosition[Math.floor(Math.random() * obstaclePosition.length)]
+	let obstaclePositionY = posY
+
+
+	const obstacle = () => {
+		ctx.drawImage(obstacleImage, obstaclePositionX, obstaclePositionY)
+		obstaclePositionY += speed
+
+		if (obstaclePositionY > canvas.height) {
+			score++
+			renderScore()
+			if (score > highScore) {
+				highScore = score
+				renderHighScore()
+			}
+			speed += 0.25
+			obstaclePositionX = obstaclePosition[Math.floor(Math.random() * obstaclePosition.length)]
+			obstaclePositionY = -270
+		}
+
+		if (pause) return
+		requestAnimationFrame(obstacle)
+//430 خاص بامتا اللعبه تىقف ومدي التداخل بين العربيتين
+//كل مايقل قابليه التداخل بتزيد ولما بيزيد بيوقف قبل  مايقرب منه 
+		if (obstaclePositionX == playerCarPositionX && canvas.height - obstaclePositionY < 330 && canvas.height - obstaclePositionY > 0) {
+			pause = true
+			alert("Game Over ");
+			if (score == highScore) {
+				localStorage.setItem('highScore', score)
+				swal('Congratulations', `You beat the previous score. Your new score is ${score}.`, 'success')
+					.then(() => window.location.reload())
+			} else {
+				swal('Game Over', `SCORE: ${score}`, 'error')
+					.then(() => window.location.reload())
+			}
+			
+		}
+	
+	}
+	
+
+	obstacleImage.onload = () => {
+		obstacle()
+	}
+}
+////////////////////////
+spawnCars(-210)//-215
+spawnCars(-645)//-650
+//****************************************************************************************************************
+
+//زرارير التحكم 
+document.addEventListener('keydown', e => {
+	if (e.code == 'ArrowLeft' && playerCarPositionX > 30)
+		playerCarPositionX -= 350
+
+	if (e.code == 'ArrowRight' && playerCarPositionX < 350)
+		playerCarPositionX += 350
+
+	if (e.code == 'ShiftLeft' || e.code == 'ShiftRight')
+		speed += 10
+})
+
+document.addEventListener('keyup', e => {
+	if (e.code == 'ShiftLeft' || e.code == 'ShiftRight')
+		speed -= 10
+})
+
+console.log(obstacleImage.height, playerCar.height)
+//***************************************************************************************************************
+</script>
+
+</body>
+</html>
